@@ -1,0 +1,7 @@
+{
+  "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+  },
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "editor.tabSize": 2
+}

@@ -1,66 +1,76 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Axios from "axios";
+import { setupCache } from 'axios-cache-interceptor';
+import { DateTime } from "luxon";
+import Link from "next/link";
 
-export default function Home() {
+interface Monitor {
+  id: number;
+  friendlyName: string;
+  domainExpireDate: string | null;
+}
+function isDateWithin(date: string | null, day: number): boolean {
+  if (!date) return false;
+  const targetDate = DateTime.fromISO(date);
+  const currentDate = DateTime.now();
+  const diffInDays = targetDate.diff(currentDate, "days").days;
+  return diffInDays <= day;
+}
+
+function compareDates(a: Monitor, b: Monitor): number {
+  if (a.domainExpireDate && b.domainExpireDate) {
+    return (
+      new Date(a.domainExpireDate).getTime() -
+      new Date(b.domainExpireDate).getTime()
+    );
+  }
+  return 0;
+}
+export default async function Home() {
+  const uptimeKey = process.env.UP_TIME_ROBOT_API_KEY;
+  const instance = Axios.create();
+  const axios = setupCache(instance);
+  const response = await axios.get<{ nextLink: string | null, data: Monitor[] }>(
+    "https://api.uptimerobot.com/v3/monitors",
+    {
+      headers: {
+        Authorization: `Bearer ${uptimeKey}`,
+      },
+    },
+  );
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="home">
+      {response.data.nextLink && (
+        <p>Paging Required!! More than 1 page.</p>
+      )}
+      <p><Link href="https://stats.uptimerobot.com/Dtk7adRGdf">Uptime</Link></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Domain</th>
+            <th>Expiry Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {response.data.data
+            .filter((monitor) => monitor.domainExpireDate !== null)
+            .sort(compareDates)
+            .map((monitor) => (
+              <tr key={monitor.id}>
+                <td>{monitor.friendlyName.replace(/^www\./, "")}</td>
+                <td
+                  className={
+                    isDateWithin(monitor.domainExpireDate, 30) ? "expiring" : ""
+                  }
+                >
+                  {DateTime.fromISO(
+                    monitor.domainExpireDate as string,
+                  ).toFormat("yyyy-MM-dd")}
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
     </div>
   );
 }
