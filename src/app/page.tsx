@@ -1,7 +1,9 @@
-import Axios from "axios";
-import { setupCache } from 'axios-cache-interceptor';
+import React from "react";
+// import Axios from "axios";
+// import { setupCache } from "axios-cache-interceptor";
 import { DateTime } from "luxon";
 import Link from "next/link";
+import axios from "axios";
 
 interface Monitor {
   id: number;
@@ -27,23 +29,23 @@ function compareDates(a: Monitor, b: Monitor): number {
 }
 export default async function Home() {
   const uptimeKey = process.env.UP_TIME_ROBOT_API_KEY;
-  const instance = Axios.create();
-  const axios = setupCache(instance);
-  const response = await axios.get<{ nextLink: string | null, data: Monitor[] }>(
-    "https://api.uptimerobot.com/v3/monitors",
-    {
-      headers: {
-        Authorization: `Bearer ${uptimeKey}`,
-      },
+  // const instance = Axios.create();
+  // const axios = setupCache(instance);
+  const response = await axios.get<{
+    nextLink: string | null;
+    data: Monitor[];
+  }>("https://api.uptimerobot.com/v3/monitors", {
+    headers: {
+      Authorization: `Bearer ${uptimeKey}`,
     },
-  );
+  });
 
   return (
     <div className="home">
-      {response.data.nextLink && (
-        <p>Paging Required!! More than 1 page.</p>
-      )}
-      <p><Link href="https://stats.uptimerobot.com/Dtk7adRGdf">Uptime</Link></p>
+      {response.data.nextLink && <p>Paging Required!! More than 1 page.</p>}
+      <p>
+        <Link href="https://stats.uptimerobot.com/Dtk7adRGdf">Uptime</Link>
+      </p>
       <table>
         <thead>
           <tr>
