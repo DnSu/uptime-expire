@@ -12,12 +12,17 @@ export default defineConfig([
     extends: ["js/recommended"],
     languageOptions: { globals: globals.browser },
   },
+  tseslint.configs.recommended,
+  pluginReact.configs.flat.recommended,
   {
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
     rules: {
       "react/react-in-jsx-scope": "off",
     },
   },
-  tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
   eslintPluginPrettierRecommended,
 ]);
